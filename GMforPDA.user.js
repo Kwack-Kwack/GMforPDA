@@ -23,7 +23,7 @@ const GM = {
     addStyle(style) {
         const s = document.createElement("style");
         s.type = "text/css";
-        s.innerHTML = s;
+        s.innerHTML = style;
 
         document.head.appendChild(s);
     },
