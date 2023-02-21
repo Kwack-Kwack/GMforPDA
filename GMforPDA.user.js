@@ -7,7 +7,7 @@
 // @match        *://*/*
 // ==/UserScript==
 
-const GM = {
+window.GM = {
     getValue(key, defaultValue) {
         return localStorage.getItem(key) ?? defaultValue;
     },
@@ -40,5 +40,3 @@ const GM = {
         } else throw new Error("Invalid method passed to GM.xmlHttpRequest")
     }
 };
-
-const unsafeWindow = window;
