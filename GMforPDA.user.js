@@ -7,6 +7,12 @@
 // @match        https://*
 // ==/UserScript==
 
+/* NOTES:
+    - setClipboard will only work whilst document is focused
+    - xmlhttpRequest only supports url, method, onload and onerror arguments. Onload is called via promise chaining, and onerror via promise catching. 
+    - getValue / setValue is global and NOT script-specific. Use a unique storage key to prevent potential clashes with other scripts.
+*/
+
 window.GM = {
     getValue(key, defaultValue) {
         return localStorage.getItem(key) ?? defaultValue;
