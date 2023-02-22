@@ -34,9 +34,17 @@ window.GM = {
 
     async xmlhttpRequest(details) {
         if (!details.method || details.method.toLowerCase() === "get") {
-            return await PDA_httpGet(details.url).then(details.onload).catch(details.onerror)
+            return await PDA_httpGet(details.url)
+                .then(details.onload)
+                .catch(details.onerror ?? ((e) => console.error(e)));
         } else if (details.method.toLowerCase() === "post") {
-            return await PDA_httpPost(details.url, details.headers, details.body).then(details.onload).catch(details.onerror)
-        } else throw new Error("Invalid method passed to GM.xmlHttpRequest")
-    }
+            return await PDA_httpPost(
+                details.url,
+                details.headers,
+                details.body
+            )
+                .then(details.onload)
+                .catch(details.onerror ?? ((e) => console.error(e)));
+        } else throw new Error("Invalid method passed to GM.xmlHttpRequest");
+    },
 };
