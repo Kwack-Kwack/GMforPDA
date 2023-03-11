@@ -9,7 +9,8 @@
 
 /* NOTES:
     - setClipboard will only work whilst document is focused
-    - xmlhttpRequest only supports url, method, onload and onerror arguments. Onload is called via promise chaining, and onerror via promise catching. 
+    - xmlhttpRequest only supports url, method, onload and onerror arguments. Onload is called via promise chaining, and onerror via promise catching.
+    - response#responseText is how you access the response from GM.xmlHttpRequest (same as with PDA_httpGet)
     - getValue / setValue is global and NOT script-specific. Use a unique storage key to prevent potential clashes with other scripts.
 */
 
@@ -46,8 +47,8 @@ window.GM = {
         } else if (details.method.toLowerCase() === "post") {
             return await PDA_httpPost(
                 details.url,
-                details.headers,
-                details.body
+                details.headers ?? {},
+                details.body ?? ""
             )
                 .then(details.onload)
                 .catch(details.onerror ?? ((e) => console.error(e)));
