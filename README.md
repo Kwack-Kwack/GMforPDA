@@ -16,7 +16,8 @@ Opens a http request.
 await GM.xmlhttpRequest({
   url: "https://api.example.com/",
   method: "POST", //optional, defaults to GET
-  onload: (r) => console.log(r.responseText), //optional, executes this function after the request is complete. Argument r is the response object, access the response via r.responseText. Please note that if this should be JSON, you must call JSON.parse(r)
+  onload: (r) => console.log(r.responseText), //optional, executes this function after the request is complete.
+  // Argument r is the response object, access the response via r.responseText. Please note that if this should be JSON, you must call JSON.parse(r)
   onerror: (e) => console.error(e), //optional, this is the default. Catches the error and passes it to the onerror function.
   headers: { //optional, POST requests only. 
     "Content-Type": "application/json",
