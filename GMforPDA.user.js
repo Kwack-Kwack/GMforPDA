@@ -67,6 +67,7 @@ window.GM = {
 	 * @returns {void}
 	 */
 	addStyle(style) {
+		if (!style) return;
 		const s = document.createElement("style");
 		s.type = "text/css";
 		s.innerHTML = style;
@@ -81,7 +82,8 @@ window.GM = {
 	 * @returns {void}
 	 */
 	setClipboard(text) {
-		if (!document.hasFocus()) return;
+		if (!document.hasFocus())
+			throw new DOMException("Document is not focused");
 		navigator.clipboard.writeText(text);
 	},
 
@@ -94,23 +96,45 @@ window.GM = {
 	 * @param {Object} details.headers The headers to send with the request, as an object. eg { "Content-Type": "application/json" }
 	 * @param {function} details.onload The function to be called when the request is successful. The response is passed as an argument.
 	 * @param {function} details.onerror The function to be called when the request fails. The error is passed as an argument.
-	 * @throws {Error} Invalid method passed to GM.xmlHttpRequest
 	 * @returns {Promise} A promise that resolves when the request is successful, and rejects when the request fails. Access response body via `response.responseText` (property, not method).
 	 */
 	async xmlhttpRequest(details) {
-		if (!details.method || details.method.toLowerCase() === "get") {
-			return await PDA_httpGet(details.url)
-				.then(details.onload)
-				.catch(details.onerror ?? ((e) => console.error(e)));
-		} else if (details.method.toLowerCase() === "post") {
-			return await PDA_httpPost(
-				details.url,
-				details.headers ?? {},
-				details.body ?? details.data ?? ""
-			)
-				.then(details.onload)
-				.catch(details.onerror ?? ((e) => console.error(e)));
-		} else throw new Error("Invalid method passed to GM.xmlHttpRequest");
+		try {
+			if (!details || typeof details !== "object")
+				throw new TypeError(
+					"Invalid details passed to GM.xmlHttpRequest"
+				);
+			const { url, method, data, body, headers, onload, onerror } =
+				details;
+			if (!url || !(typeof url == "string" || url instanceof URL))
+				throw new TypeError("Invalid url passed to GM.xmlHttpRequest");
+			if (!(method && typeof method !== "string"))
+				throw new TypeError(
+					"Invalid method passed to GM.xmlHttpRequest"
+				);
+			if (!method || method.toLowerCase() === "get") {
+				return await PDA_httpGet(url)
+					.then(onload ?? ((x) => x))
+					.catch(onerror ?? ((e) => console.error(e)));
+			} else if (method.toLowerCase() === "post") {
+				const h = headers ?? {};
+				h["X-GMforPDA"] = "Sent from PDA via GMforPDA";
+				url = url instanceof URL ? url.href : url;
+				return await PDA_httpPost(url, h ?? {}, body ?? data ?? "")
+					.then(onload ?? ((x) => x))
+					.catch(onerror ?? ((e) => console.error(e)));
+			} else
+				throw new TypeError(
+					"Invalid method passed to GM.xmlHttpRequest"
+				);
+		} catch (e) {
+			/** Should these be switched, since the console is inverted in PDA? */
+			console.error(
+				"An uncaught error occured in GM.xmlHttpRequest - please report this in the PDA discord if this is unexpected. The error is: "
+			);
+			console.error(e);
+			throw e instanceof Error ? e : new Error(e);
+		}
 	},
 
 	/**
@@ -143,6 +167,7 @@ window.GM = {
 	 * @param {string} url the URL to open in a new tab
 	 */
 	openInTab(url) {
+		if (!url) throw TypeError("No URL provided to GM.openInTab");
 		window.open(url, "_blank");
 	},
 
