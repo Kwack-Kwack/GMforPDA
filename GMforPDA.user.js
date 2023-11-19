@@ -110,9 +110,9 @@ window.GM = {
 				throw new TypeError(
 					"Invalid details passed to GM.xmlHttpRequest"
 				);
-			const { url, method, data, body, headers, onload, onerror } =
+			let { url, method, data, body, headers, onload, onerror } =
 				details;
-			if (!url || !(typeof url == "string" || url instanceof URL))
+			if (!url || !(typeof url === "string" || url instanceof URL))
 				throw new TypeError("Invalid url passed to GM.xmlHttpRequest");
 			if ((method && typeof method !== "string"))
 				throw new TypeError(
