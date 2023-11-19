@@ -7,12 +7,18 @@
 // @match        https://*
 // ==/UserScript==
 
-/* NOTES:
-    - setClipboard will only work whilst document is focused
-    - xmlhttpRequest only supports url, method, onload and onerror arguments. Onload is called via promise chaining, and onerror via promise catching.
-    - response#responseText is how you access the response from GM.xmlHttpRequest (same as with PDA_httpGet)
-    - getValue / setValue is global and NOT script-specific. Use a unique storage key to prevent potential clashes with other scripts.
-*/
+/** NOTES:
+ *  - These fixes are not perfect, and may not work in all cases. If you find a bug, please report it in the PDA discord.
+ *  - Both dot notation (GM.addStyle) and underscore notation (GM_addStyle) are supported.
+ *  - Whilst this script supplies vanilla JS counterparts to the GM_ functions, it cannot prepare your script to run on
+ *    mobile devices. Viewports are different, the page looks different, some selectors do change so your script may have to
+ *    be adapted to run properly. You can reach out to me in the PDA discord if you'd like some assistance with this.
+ *  - The storage functions (getValue/setValue/deleteValue/listValues) are global and not script-specific. Other scripts will
+ *    use the same storage keys as you, so use a unique key to prevent this issue. 
+ *  - The xmlhttpRequest function in TamperMonkey is quite complex, and I've only implemented the most basic functionality. It
+ *    only supports the keys `url`, `method`, `data`, `body`, `headers`, `onload` and `onerror`. If you need more functionality,
+ *    you can use the PDA_httpGet and PDA_httpPost functions directly.
+ */
 
 const ver = 0.2;
 
@@ -108,7 +114,7 @@ window.GM = {
 				details;
 			if (!url || !(typeof url == "string" || url instanceof URL))
 				throw new TypeError("Invalid url passed to GM.xmlHttpRequest");
-			if (!(method && typeof method !== "string"))
+			if ((method && typeof method !== string))
 				throw new TypeError(
 					"Invalid method passed to GM.xmlHttpRequest"
 				);
@@ -130,9 +136,9 @@ window.GM = {
 		} catch (e) {
 			/** Should these be switched, since the console is inverted in PDA? */
 			console.error(
-				"An uncaught error occured in GM.xmlHttpRequest - please report this in the PDA discord if this is unexpected. The error is: "
+				"An uncaught error occured in GM.xmlHttpRequest - please report this in the PDA discord if this is unexpected. The error is above ^ "
 			);
-			console.error(e);
+			console.error(e instanceof Error ? e : JSON.stringify(e));
 			throw e instanceof Error ? e : new Error(e);
 		}
 	},
@@ -171,6 +177,12 @@ window.GM = {
 		window.open(url, "_blank");
 	},
 
+	/** Yes these constants achieve nothing - it's here to prevent scripts throwing errors.
+	 *  I haven't seen many scripts require this function work as expected, it's normally just for logging purposes and
+	 *  crash reports, hence why the constants are here.
+	 *  If you're a script developer and you're looking to use this function, use a different method.
+	 *  `GM_info.script.version` could just be `const version = "0.1.1"` at the top of your script instead.
+	  */
 	info: {
 		script: {
 			description: "This information is unavailable in TornPDA",
@@ -188,3 +200,6 @@ window.GM = {
 		version: ver,
 	},
 };
+
+/** Add underscore variants to window object as well */
+Object.entries(GM).forEach(([k, v]) => window[`GM_${k}`] = v);
