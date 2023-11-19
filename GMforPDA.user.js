@@ -114,7 +114,7 @@ window.GM = {
 				details;
 			if (!url || !(typeof url == "string" || url instanceof URL))
 				throw new TypeError("Invalid url passed to GM.xmlHttpRequest");
-			if ((method && typeof method !== string))
+			if ((method && typeof method !== "string"))
 				throw new TypeError(
 					"Invalid method passed to GM.xmlHttpRequest"
 				);
