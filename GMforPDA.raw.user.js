@@ -45,11 +45,11 @@ window.GM = {
 				throw new TypeError(
 					"Invalid details passed to GM.xmlHttpRequest"
 				);
-			const { url, method, data, body, headers, onload, onerror } =
+			let { url, method, data, body, headers, onload, onerror } =
 				details;
-			if (!url || !(typeof url == "string" || url instanceof URL))
+			if (!url || !(typeof url === "string" || url instanceof URL))
 				throw new TypeError("Invalid url passed to GM.xmlHttpRequest");
-			if (method && typeof method !== string)
+			if ((method && typeof method !== "string"))
 				throw new TypeError(
 					"Invalid method passed to GM.xmlHttpRequest"
 				);
@@ -69,6 +69,7 @@ window.GM = {
 					"Invalid method passed to GM.xmlHttpRequest"
 				);
 		} catch (e) {
+
 			console.error(
 				"An uncaught error occured in GM.xmlHttpRequest - please report this in the PDA discord if this is unexpected. The error is above ^ "
 			);
@@ -117,4 +118,4 @@ window.GM = {
 	},
 };
 
-Object.entries(GM).forEach(([k, v]) => (window[`GM_${k}`] = v));
+Object.entries(GM).forEach(([k, v]) => window[`GM_${k}`] = v);
