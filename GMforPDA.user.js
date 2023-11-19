@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GMforPDA
 // @namespace    https://github.com/Kwack-Kwack/GMforPDA
-// @version      0.2
+// @version      1.0
 // @description  A userscript that allows GM_ functions to be called in tornPDA. Simply replace the underscore (_) with a period (.) eg GM.addStyle
 // @author       Kwack [2190604]
 // @match        https://*
@@ -20,7 +20,7 @@
  *    you can use the PDA_httpGet and PDA_httpPost functions directly.
  */
 
-const ver = 0.2;
+const ver = 1.0;
 
 if (!window.flutter_inappwebview)
 	throw new Error(

@@ -1,4 +1,4 @@
-const ver = 0.2;
+const ver = 1.0;
 
 if (!window.flutter_inappwebview)
 	throw new Error(
