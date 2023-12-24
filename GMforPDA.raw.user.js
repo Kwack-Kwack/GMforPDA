@@ -1,3 +1,5 @@
+// @match *
+
 (async () => {
 	function t(t, e) {
 		if (!t) throw new TypeError("No key supplied to GM_getValue");
