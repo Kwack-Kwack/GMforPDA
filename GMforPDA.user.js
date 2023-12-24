@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GMforPDA
 // @namespace    https://github.com/Kwack-Kwack/GMforPDA
-// @version      1.0
+// @version      2.0
 // @description  A userscript that allows GM_ functions to be called in tornPDA. Simply replace the underscore (_) with a period (.) eg GM.addStyle
 // @author       Kwack [2190604]
 // @match        https://*
