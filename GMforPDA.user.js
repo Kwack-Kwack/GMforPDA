@@ -7,199 +7,179 @@
 // @match        https://*
 // ==/UserScript==
 
-/** NOTES:
- *  - These fixes are not perfect, and may not work in all cases. If you find a bug, please report it in the PDA discord.
- *  - Both dot notation (GM.addStyle) and underscore notation (GM_addStyle) are supported.
- *  - Whilst this script supplies vanilla JS counterparts to the GM_ functions, it cannot prepare your script to run on
- *    mobile devices. Viewports are different, the page looks different, some selectors do change so your script may have to
- *    be adapted to run properly. You can reach out to me in the PDA discord if you'd like some assistance with this.
- *  - The storage functions (getValue/setValue/deleteValue/listValues) are global and not script-specific. Other scripts will
- *    use the same storage keys as you, so use a unique key to prevent this issue. 
- *  - The xmlhttpRequest function in TamperMonkey is quite complex, and I've only implemented the most basic functionality. It
- *    only supports the keys `url`, `method`, `data`, `body`, `headers`, `onload` and `onerror`. If you need more functionality,
- *    you can use the PDA_httpGet and PDA_httpPost functions directly.
- */
+(async () => {
+	/** In PDA, scripts are not sandboxed so there is no need for unsafeWindow. */
+	window.unsafeWindow = window;
 
-const ver = 1.0;
+	ver = 2.0;
 
-if (!window.flutter_inappwebview)
-	throw new Error(
-		"GMforPDA requires flutter_inappwebview to be defined. Ensure this script is running inside of PDA."
-	);
+	window.GM_info = {
+		script: {},
+		scriptHandler: `GMforPDA version ${ver}`,
+	};
 
-window.GM = {
-	/**
-	 * To enforce a script version, throw an error if window.GM.ver !== [desired version]
-	 * To enforce only a major version (minor, unbreaking changes permitted) just use Math.floor(window.GM.ver) !== [desired major version]
-	 */
-	ver,
+	console.log(GM_info);
 
-	/**
-	 * @param {string} key The key to the specified value.
-	 * @param {string} defaultValue The value to be returned if there is no value associated with the specified key
-	 * @returns {string} Returns the value associated with the specified key, or the default value if there is no value associated with the specified key.
-	 */
-	getValue(key, defaultValue) {
-		return localStorage.getItem(key) ?? defaultValue;
-	},
+	function __GM_getValue(key, defaultValue) {
+		if (!key) throw new TypeError("No key supplied to GM_getValue");
+		const r = localStorage.getItem(key);
+		if (!r) return defaultValue ?? null;
+		try {
+			const j = JSON.parse(r);
+			if (j) return j;
+			else return defaultValue ?? null;
+		} catch (e) {
+			if (e instanceof SyntaxError)
+				return r; // Return original string if could not parse JSON, for legacy reasons
+			else {
+				console.error(
+					"**Error with GM_getValue - please contact Kwack [2190604]**",
+					e
+				);
+				throw e;
+			}
+		}
+	}
+	window.GM_getValue = __GM_getValue;
 
-	/**
-	 * @param {string} key The key to store the value under. This is global and NOT script-specific. Use a unique storage key to prevent potential clashes with other scripts.
-	 * @param {string} value The value to store under the specified key.
-	 * @returns {void}
-	 */
-	setValue(key, value) {
-		localStorage.setItem(key, value);
-	},
+	function __GM_setValue(key, value) {
+		if (!key) throw new TypeError("No key supplied to GM_setValue");
+		localStorage.setItem(key, JSON.stringify(value));
+	}
+	window.GM_setValue = __GM_setValue;
 
-	/**
-	 * @param {string} key Removes a key-value pair from storage.
-	 * @returns {void}
-	 */
-	deleteValue(key) {
+	function __GM_deleteValue(key) {
+		if (!key) throw new TypeError("No key supplied to GM_deleteValue");
 		localStorage.removeItem(key);
-	},
+	}
+	window.GM_deleteValue = __GM_deleteValue;
 
-	/**
-	 * @returns {string[]} Returns an array of all keys in storage.
-	 */
-	listValues() {
-		return Object.values(localStorage);
-	},
+	function __GM_listValues() {
+		return Object.keys(localStorage);
+	}
+	window.GM_listValues = __GM_listValues;
 
-	/**
-	 *
-	 * @param {string} style The CSS to be added to the page, as a string.
-	 * @returns {void}
-	 */
-	addStyle(style) {
-		if (!style) return;
+	function __GM_addStyle(style) {
+		if (!style || typeof style !== "string") return;
 		const s = document.createElement("style");
 		s.type = "text/css";
 		s.innerHTML = style;
-
 		document.head.appendChild(s);
-	},
+	}
+	window.GM_addStyle = __GM_addStyle;
 
-	/**
-	 *
-	 * @description Only works if the document is focused.
-	 * @param {string} text The text to be copied to the clipboard.
-	 * @returns {void}
-	 */
-	setClipboard(text) {
-		if (!document.hasFocus())
-			throw new DOMException("Document is not focused");
+	function __GM_notification(...args) {
+		if (typeof args[0] === "object") {
+			const { text, title, onclick, ondone } = args[0];
+			notify(text, title, onclick, ondone);
+		} else if (typeof args[0] === "string") {
+			const [text, title, , onclick] = args;
+			notify(text, title, onclick);
+		}
+
+		return { remove: () => {} }; // There to prevent syntax errors.
+
+		function notify(text, title, onclick, ondone) {
+			if (!text)
+				throw new TypeError(
+					"No notification text supplied to GM_notification"
+				);
+			confirm(`${title ?? "No title specified"}\n${text}`) && onclick?.();
+			ondone();
+		}
+	}
+	window.GM_notification = __GM_notification;
+
+	function __GM_setClipboard(text) {
+		if (!text) throw new TypeError("No text supplied to GM_setClipboard");
 		navigator.clipboard.writeText(text);
-	},
+	}
+	window.GM_setClipboard = __GM_setClipboard;
 
-	/**
-	 *
-	 * @param details The details passed to the request.
-	 * @param {"GET" | "POST"} details.method The HTTP method to use.
-	 * @param {string} details.url The URL to send the request to.
-	 * @param {string} details.data The body of the request, for POST requests
-	 * @param {Object} details.headers The headers to send with the request, as an object. eg { "Content-Type": "application/json" }
-	 * @param {function} details.onload The function to be called when the request is successful. The response is passed as an argument.
-	 * @param {function} details.onerror The function to be called when the request fails. The error is passed as an argument.
-	 * @returns {Promise} A promise that resolves when the request is successful, and rejects when the request fails. Access response body via `response.responseText` (property, not method).
-	 */
-	async xmlhttpRequest(details) {
-		try {
+	function __GM_xmlhttpRequest(details) {
+		const { abortController } = ___coreXmlHttpRequest(details);
+		if (!details || typeof details !== "object")
+			throw new TypeError("Invalid details passed to GM_xmlHttpRequest");
+		return { abort: () => abortController.abort() };
+	}
+	window.GM_xmlhttpRequest = __GM_xmlhttpRequest;
+
+	const GM = {
+		info: __GM_info,
+		addStyle: __GM_addStyle,
+		deleteValue: async (key) => __GM_deleteValue(key),
+		getValue: async (key, defaultValue) => __GM_getValue(key, defaultValue),
+		listValues: async () => __GM_listValues(),
+		notification: __GM_notification,
+		setClipboard: __GM_setClipboard,
+		setValue: async (key, value) => __GM_setValue(key, value),
+		xmlHttpRequest: async (details) => {
 			if (!details || typeof details !== "object")
 				throw new TypeError(
 					"Invalid details passed to GM.xmlHttpRequest"
 				);
-			let { url, method, data, body, headers, onload, onerror } =
-				details;
-			if (!url || !(typeof url === "string" || url instanceof URL))
-				throw new TypeError("Invalid url passed to GM.xmlHttpRequest");
-			if ((method && typeof method !== "string"))
-				throw new TypeError(
-					"Invalid method passed to GM.xmlHttpRequest"
-				);
-			if (!method || method.toLowerCase() === "get") {
-				return await PDA_httpGet(url)
-					.then(onload ?? ((x) => x))
-					.catch(onerror ?? ((e) => console.error(e)));
-			} else if (method.toLowerCase() === "post") {
-				const h = headers ?? {};
-				h["X-GMforPDA"] = "Sent from PDA via GMforPDA";
-				url = url instanceof URL ? url.href : url;
-				return await PDA_httpPost(url, h ?? {}, body ?? data ?? "")
-					.then(onload ?? ((x) => x))
-					.catch(onerror ?? ((e) => console.error(e)));
-			} else
-				throw new TypeError(
-					"Invalid method passed to GM.xmlHttpRequest"
-				);
-		} catch (e) {
-			/** Should these be switched, since the console is inverted in PDA? */
-			console.error(
-				"An uncaught error occured in GM.xmlHttpRequest - please report this in the PDA discord if this is unexpected. The error is above ^ "
-			);
-			console.error(e instanceof Error ? e : JSON.stringify(e));
-			throw e instanceof Error ? e : new Error(e);
-		}
-	},
-
-	/**
-	 *
-	 * @param  {...any} args Either an object with the following properties, or the properties themselves in order:
-	 * @param {string} text The text to be displayed in the alert.
-	 * @param {string} title The title of the alert.
-	 * @param {function} onclick The function to be called when the alert is clicked.
-	 * @param {function} ondone The function to be called when the alert is closed.
-	 */
-	notification(...args) {
-		let text, title, onclick, ondone;
-		if (typeof args[0] === "string") {
-			[text, title, , onclick] = args;
-		} else {
-			({ text, title, onclick, ondone } = args[0]);
-		}
-		const alert =
-			(title
-				? `Notification from script ${title}:`
-				: "Notification from unnamed source:") +
-			"\n" +
-			text;
-		if (confirm(alert)) onclick?.();
-		return ondone?.();
-	},
-
-	/**
-	 *
-	 * @param {string} url the URL to open in a new tab
-	 */
-	openInTab(url) {
-		if (!url) throw TypeError("No URL provided to GM.openInTab");
-		window.open(url, "_blank");
-	},
-
-	/** Yes these constants achieve nothing - it's here to prevent scripts throwing errors.
-	 *  I haven't seen many scripts require this function work as expected, it's normally just for logging purposes and
-	 *  crash reports, hence why the constants are here.
-	 *  If you're a script developer and you're looking to use this function, use a different method.
-	 *  `GM_info.script.version` could just be `const version = "0.1.1"` at the top of your script instead.
-	  */
-	info: {
-		script: {
-			description: "This information is unavailable in TornPDA",
-			excludes: [],
-			includes: [],
-			matches: [],
-			name: undefined,
-			namespace: undefined,
-			resources: {},
-			"run-at": undefined,
-			version: undefined,
+			const { abortController, prom } = ___coreXmlHttpRequest(details);
+			prom.abort = () => abortController.abort();
+			return prom;
 		},
-		scriptMetaStr: "This information is unavailable in TornPDA",
-		scriptHandler: `TornPDA, using GMforPDA version ${ver}`,
-		version: ver,
-	},
-};
+	};
+	window.GM = GM;
 
-/** Add underscore variants to window object as well */
-Object.entries(GM).forEach(([k, v]) => window[`GM_${k}`] = v);
+	/** 3 underscores on this one, as it's an internal function */
+	function ___coreXmlHttpRequest(details) {
+		const abortController = new AbortController();
+		const abortSignal = abortController.signal;
+		const timeoutController = new AbortController();
+		const timeoutSignal = timeoutController.signal;
+		const {
+			url,
+			method,
+			headers,
+			timeout,
+			data,
+			onabort,
+			onerror,
+			onload,
+			onloadend,
+			onprogress,
+			onreadystatechange,
+			ontimeout,
+		} = details;
+		setTimeout(() => timeoutController.abort(), timeout ?? 30000);
+
+		const prom = new Promise(async (res, rej) => {
+			abortSignal.addEventListener("abort", () => rej("Request aborted"));
+			timeoutSignal.addEventListener("abort", () =>
+				rej("Request timed out")
+			);
+			if (!method || method.toLowerCase() !== "post") {
+				PDA_httpGet(url).then(res).catch(rej);
+				onprogress?.();
+			} else {
+				PDA_httpPost(url, headers ?? {}, data ?? "")
+					.then(res)
+					.catch(rej);
+				onprogress?.();
+			}
+		})
+			.then((r) => {
+				onload?.(r);
+				onloadend?.(r);
+				onreadystatechange?.(r);
+			})
+			.catch((e) => {
+				switch (true) {
+					case e === "Request aborted":
+						onabort?.(e);
+						break;
+					case e === "Request timed out":
+						ontimeout?.(e);
+						break;
+					default:
+						onerror?.(e);
+				}
+			});
+
+		return { abortController, prom };
+	}
+})();
