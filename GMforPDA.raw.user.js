@@ -1,142 +1,186 @@
 // @match *
 
-(async () => {
-	function t(t, e) {
-		if (!t) throw new TypeError("No key supplied to GM_getValue");
-		const o = localStorage.getItem(t);
-		if (!o) return e ?? null;
+((e, t, o, r, n, i) => {
+	const a = {
+		script: {},
+		scriptHandler: "GMforPDA version 2.1",
+		version: 2.1,
+	};
+	function s(e, t) {
+		if (!e) throw new TypeError("No key supplied to GM_getValue");
+		const o = i.getItem(e);
+		if (!o) return t ?? null;
 		try {
-			const t = JSON.parse(o);
-			return t || (e ?? null);
-		} catch (t) {
-			if (t instanceof SyntaxError) return o;
-			throw t;
+			const e = JSON.parse(o);
+			return e || (t ?? null);
+		} catch (r) {
+			if (r instanceof SyntaxError) return o;
+			throw r;
 		}
 	}
-	function e(t, e) {
-		if (!t) throw new TypeError("No key supplied to GM_setValue");
-		localStorage.setItem(t, JSON.stringify(e));
+	function l(e, t) {
+		if (!e) throw new TypeError("No key supplied to GM_setValue");
+		i.setItem(e, JSON.stringify(t));
 	}
-	function o(t) {
-		if (!t) throw new TypeError("No key supplied to GM_deleteValue");
-		localStorage.removeItem(t);
+	function u(e) {
+		if (!e) throw new TypeError("No key supplied to GM_deleteValue");
+		i.removeItem(e);
 	}
-	function n() {
-		return Object.keys(localStorage);
+	function c() {
+		return t.keys(i);
 	}
-	function r(t) {
-		if (!t || "string" != typeof t) return;
-		const e = document.createElement("style");
-		(e.type = "text/css"), (e.innerHTML = t), document.head.appendChild(e);
+	function d(e) {
+		if (!e || "string" != typeof e) return;
+		const t = document.createElement("style");
+		(t.type = "text/css"), (t.innerHTML = e), document.head.appendChild(t);
 	}
-	function i(...t) {
-		if ("object" == typeof t[0]) {
-			const { text: o, title: n, onclick: r, ondone: i } = t[0];
-			e(o, n, r, i);
-		} else if ("string" == typeof t[0]) {
-			const [o, n, , r] = t;
-			e(o, n, r);
+	function p(...e) {
+		if ("object" == typeof e[0]) {
+			const { text: o, title: r, onclick: n, ondone: i } = e[0];
+			t(o, r, n, i);
+		} else if ("string" == typeof e[0]) {
+			const [o, r, , n] = e;
+			t(o, r, n);
 		}
 		return { remove: () => {} };
-		function e(t, e, o, n) {
-			if (!t)
+		function t(e, t, o, r) {
+			if (!e)
 				throw new TypeError(
 					"No notification text supplied to GM_notification"
 				);
-			confirm(`${e ?? "No title specified"}\n${t}`) && o?.(), n();
+			confirm(`${t ?? "No title specified"}\n${e}`) && o?.(), r?.();
 		}
 	}
-	function a(t) {
-		if (!t) throw new TypeError("No text supplied to GM_setClipboard");
-		navigator.clipboard.writeText(t);
+	function f(e) {
+		if (!e) throw new TypeError("No text supplied to GM_setClipboard");
+		navigator.clipboard.writeText(e);
 	}
-	(window.unsafeWindow = window),
-		(ver = 2),
-		(window.GM_info = {
-			script: {},
-			scriptHandler: `GMforPDA version ${ver}`,
-		}),
-		(window.GM_getValue = t),
-		(window.GM_setValue = e),
-		(window.GM_deleteValue = o),
-		(window.GM_listValues = n),
-		(window.GM_addStyle = r),
-		(window.GM_notification = i),
-		(window.GM_setClipboard = a),
-		(window.GM_xmlhttpRequest = function (t) {
-			const { abortController: e } = l(t);
-			if (!t || "object" != typeof t)
-				throw new TypeError(
-					"Invalid details passed to GM_xmlHttpRequest"
-				);
-			return { abort: () => e.abort() };
-		});
-	const s = {
-		info: __GM_info,
-		addStyle: r,
-		deleteValue: async (t) => o(t),
-		getValue: async (e, o) => t(e, o),
-		listValues: async () => n(),
-		notification: i,
-		setClipboard: a,
-		setValue: async (t, o) => e(t, o),
-		xmlHttpRequest: async (t) => {
-			if (!t || "object" != typeof t)
+	const w = {
+		version: 2.1,
+		info: a,
+		addStyle: d,
+		deleteValue: async (e) => u(e),
+		getValue: async (e, t) => s(e, t),
+		listValues: async () => c(),
+		notification: p,
+		setClipboard: f,
+		setValue: async (e, t) => l(e, t),
+		xmlHttpRequest: async (e) => {
+			if (!e || "object" != typeof e)
 				throw new TypeError(
 					"Invalid details passed to GM.xmlHttpRequest"
 				);
-			const { abortController: e, prom: o } = l(t);
-			return (o.abort = () => e.abort()), o;
+			const { abortController: t, prom: o } = y(e);
+			return (o.abort = () => t.abort()), o;
 		},
 	};
-	function l(t) {
-		const e = new AbortController(),
-			o = e.signal,
-			n = new AbortController(),
-			r = n.signal,
+	function y(e) {
+		const t = new r(),
+			i = t.signal,
+			a = new r(),
+			s = a.signal,
 			{
-				url: i,
-				method: a,
-				headers: s,
-				timeout: l,
-				data: c,
-				onabort: d,
-				onerror: u,
-				onload: w,
-				onloadend: p,
-				onprogress: f,
-				onreadystatechange: y,
-				ontimeout: b,
-			} = t;
-		setTimeout(() => n.abort(), l ?? 3e4);
+				url: l,
+				method: u,
+				headers: c,
+				timeout: d,
+				data: p,
+				onabort: f,
+				onerror: w,
+				onload: y,
+				onloadend: h,
+				onprogress: b,
+				onreadystatechange: m,
+				ontimeout: M,
+			} = e;
+		setTimeout(() => a.abort(), d ?? 3e4);
 		return {
-			abortController: e,
-			prom: new Promise(async (t, e) => {
-				o.addEventListener("abort", () => e("Request aborted")),
-					r.addEventListener("abort", () => e("Request timed out")),
-					a && "post" === a.toLowerCase()
-						? (PDA_httpPost(i, s ?? {}, c ?? "")
-								.then(t)
-								.catch(e),
-						  f?.())
-						: (PDA_httpGet(i).then(t).catch(e), f?.());
+			abortController: t,
+			prom: new n(async (e, t) => {
+				try {
+					l || t("No URL supplied"),
+						i.addEventListener("abort", () => t("Request aborted")),
+						s.addEventListener("abort", () =>
+							t("Request timed out")
+						),
+						u && "post" === u.toLowerCase()
+							? (PDA_httpPost(l, c ?? {}, p ?? "")
+									.then(e)
+									.catch(t),
+							  b?.())
+							: (PDA_httpGet(l).then(e).catch(t), b?.());
+				} catch (o) {
+					t(o);
+				}
 			})
-				.then((t) => {
-					w?.(t), p?.(t), y?.(t);
-				})
-				.catch((t) => {
+				.then((e) => (y?.(e), h?.(e), m?.(e), e))
+				.catch((e) => {
 					switch (!0) {
-						case "Request aborted" === t:
-							d?.(t);
-							break;
-						case "Request timed out" === t:
-							b?.(t);
-							break;
+						case "Request aborted" === e:
+							if (
+								((e = new o("Request aborted", "AbortError")),
+								f)
+							)
+								return f(e);
+							if (w) return w(e);
+							throw e;
+						case "Request timed out" === e:
+							if (
+								((e = new o(
+									"Request timed out",
+									"TimeoutError"
+								)),
+								M)
+							)
+								return M(e);
+							if (w) return w(e);
+							throw e;
+						case "No URL supplied" === e:
+							if (
+								((e = new TypeError(
+									"Failed to fetch: No URL supplied"
+								)),
+								w)
+							)
+								return w(e);
+							throw e;
 						default:
-							u?.(t);
+							if (
+								((e && e instanceof Error) ||
+									(e = new Error(e ?? "Unknown Error")),
+								w)
+							)
+								return w(e);
+							throw e;
 					}
 				}),
 		};
 	}
-	window.GM = s;
-})();
+	t.entries({
+		GM: t.freeze(w),
+		GM_info: t.freeze(a),
+		GM_getValue: s,
+		GM_setValue: l,
+		GM_deleteValue: u,
+		GM_listValues: c,
+		GM_addStyle: d,
+		GM_notification: p,
+		GM_setClipboard: f,
+		GM_xmlhttpRequest: function (e) {
+			const { abortController: t } = y(e);
+			if (!e || "object" != typeof e)
+				throw new TypeError(
+					"Invalid details passed to GM_xmlHttpRequest"
+				);
+			return { abort: () => t.abort() };
+		},
+		unsafeWindow: e,
+	}).forEach(([o, r]) => {
+		t.defineProperty(e, o, {
+			value: r,
+			writable: !1,
+			enumerable: !0,
+			configurable: !1,
+		});
+	});
+})(window, Object, DOMException, AbortController, Promise, localStorage);

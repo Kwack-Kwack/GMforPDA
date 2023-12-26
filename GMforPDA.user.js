@@ -1,25 +1,23 @@
 // ==UserScript==
 // @name         GMforPDA
 // @namespace    https://github.com/Kwack-Kwack/GMforPDA
-// @version      2.0
-// @description  A userscript that allows GM_ functions to be called in tornPDA. Simply replace the underscore (_) with a period (.) eg GM.addStyle
+// @version      2.1
+// @description  A script that allows native GM functions to be called in Torn PDA.
 // @author       Kwack [2190604]
-// @match        https://*
+// @match        *
 // ==/UserScript==
 
-(async () => {
+
+
+((window, Object, DOMException, AbortController, Promise, localStorage) => {
+	const version = 2.1;
+
 	/** In PDA, scripts are not sandboxed so there is no need for unsafeWindow. */
-	window.unsafeWindow = window;
-
-	ver = 2.0;
-
-	window.GM_info = {
+	const __GM_info = {
 		script: {},
-		scriptHandler: `GMforPDA version ${ver}`,
+		scriptHandler: `GMforPDA version ${version}`,
+		version,
 	};
-
-	console.log(GM_info);
-
 	function __GM_getValue(key, defaultValue) {
 		if (!key) throw new TypeError("No key supplied to GM_getValue");
 		const r = localStorage.getItem(key);
@@ -40,25 +38,17 @@
 			}
 		}
 	}
-	window.GM_getValue = __GM_getValue;
-
 	function __GM_setValue(key, value) {
 		if (!key) throw new TypeError("No key supplied to GM_setValue");
 		localStorage.setItem(key, JSON.stringify(value));
 	}
-	window.GM_setValue = __GM_setValue;
-
 	function __GM_deleteValue(key) {
 		if (!key) throw new TypeError("No key supplied to GM_deleteValue");
 		localStorage.removeItem(key);
 	}
-	window.GM_deleteValue = __GM_deleteValue;
-
 	function __GM_listValues() {
 		return Object.keys(localStorage);
 	}
-	window.GM_listValues = __GM_listValues;
-
 	function __GM_addStyle(style) {
 		if (!style || typeof style !== "string") return;
 		const s = document.createElement("style");
@@ -66,8 +56,6 @@
 		s.innerHTML = style;
 		document.head.appendChild(s);
 	}
-	window.GM_addStyle = __GM_addStyle;
-
 	function __GM_notification(...args) {
 		if (typeof args[0] === "object") {
 			const { text, title, onclick, ondone } = args[0];
@@ -76,35 +64,28 @@
 			const [text, title, , onclick] = args;
 			notify(text, title, onclick);
 		}
-
 		return { remove: () => {} }; // There to prevent syntax errors.
-
 		function notify(text, title, onclick, ondone) {
 			if (!text)
 				throw new TypeError(
 					"No notification text supplied to GM_notification"
 				);
 			confirm(`${title ?? "No title specified"}\n${text}`) && onclick?.();
-			ondone();
+			ondone?.();
 		}
 	}
-	window.GM_notification = __GM_notification;
-
 	function __GM_setClipboard(text) {
 		if (!text) throw new TypeError("No text supplied to GM_setClipboard");
 		navigator.clipboard.writeText(text);
 	}
-	window.GM_setClipboard = __GM_setClipboard;
-
 	function __GM_xmlhttpRequest(details) {
 		const { abortController } = ___coreXmlHttpRequest(details);
 		if (!details || typeof details !== "object")
 			throw new TypeError("Invalid details passed to GM_xmlHttpRequest");
 		return { abort: () => abortController.abort() };
 	}
-	window.GM_xmlhttpRequest = __GM_xmlhttpRequest;
-
 	const GM = {
+		version,
 		info: __GM_info,
 		addStyle: __GM_addStyle,
 		deleteValue: async (key) => __GM_deleteValue(key),
@@ -123,8 +104,26 @@
 			return prom;
 		},
 	};
-	window.GM = GM;
-
+	Object.entries({
+		GM: Object.freeze(GM),
+		GM_info: Object.freeze(__GM_info),
+		GM_getValue: __GM_getValue,
+		GM_setValue: __GM_setValue,
+		GM_deleteValue: __GM_deleteValue,
+		GM_listValues: __GM_listValues,
+		GM_addStyle: __GM_addStyle,
+		GM_notification: __GM_notification,
+		GM_setClipboard: __GM_setClipboard,
+		GM_xmlhttpRequest: __GM_xmlhttpRequest,
+		unsafeWindow: window,
+	}).forEach(([key, value]) => {
+		Object.defineProperty(window, key, {
+			value: value,
+			writable: false,
+			enumerable: true,
+			configurable: false,
+		});
+	});
 	/** 3 underscores on this one, as it's an internal function */
 	function ___coreXmlHttpRequest(details) {
 		const abortController = new AbortController();
@@ -146,40 +145,60 @@
 			ontimeout,
 		} = details;
 		setTimeout(() => timeoutController.abort(), timeout ?? 30000);
-
 		const prom = new Promise(async (res, rej) => {
-			abortSignal.addEventListener("abort", () => rej("Request aborted"));
-			timeoutSignal.addEventListener("abort", () =>
-				rej("Request timed out")
-			);
-			if (!method || method.toLowerCase() !== "post") {
-				PDA_httpGet(url).then(res).catch(rej);
-				onprogress?.();
-			} else {
-				PDA_httpPost(url, headers ?? {}, data ?? "")
-					.then(res)
-					.catch(rej);
-				onprogress?.();
+			try {
+				if (!url) rej("No URL supplied");
+				abortSignal.addEventListener("abort", () =>
+					rej("Request aborted")
+				);
+				timeoutSignal.addEventListener("abort", () =>
+					rej("Request timed out")
+				);
+				if (!method || method.toLowerCase() !== "post") {
+					PDA_httpGet(url).then(res).catch(rej);
+					onprogress?.();
+				} else {
+					PDA_httpPost(url, headers ?? {}, data ?? "")
+						.then(res)
+						.catch(rej);
+					onprogress?.();
+				}
+			} catch (e) {
+				rej(e);
 			}
 		})
 			.then((r) => {
 				onload?.(r);
 				onloadend?.(r);
 				onreadystatechange?.(r);
+				return r;
 			})
 			.catch((e) => {
 				switch (true) {
 					case e === "Request aborted":
-						onabort?.(e);
-						break;
+						e = new DOMException("Request aborted", "AbortError");
+						if (onabort) return onabort(e);
+						else if (onerror) return onerror(e);
+						else throw e;
 					case e === "Request timed out":
-						ontimeout?.(e);
-						break;
+						e = new DOMException(
+							"Request timed out",
+							"TimeoutError"
+						);
+						if (ontimeout) return ontimeout(e);
+						else if (onerror) return onerror(e);
+						else throw e;
+					case e === "No URL supplied":
+						e = new TypeError("Failed to fetch: No URL supplied");
+						if (onerror) return onerror(e);
+						else throw e;
 					default:
-						onerror?.(e);
+						if (!e || !(e instanceof Error))
+							e = new Error(e ?? "Unknown Error");
+						if (onerror) return onerror(e);
+						else throw e;
 				}
 			});
-
 		return { abortController, prom };
 	}
-})();
+})(window, Object, DOMException, AbortController, Promise, localStorage);
