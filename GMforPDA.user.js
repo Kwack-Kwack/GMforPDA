@@ -1,18 +1,15 @@
 // ==UserScript==
 // @name         GMforPDA
 // @namespace    https://github.com/Kwack-Kwack/GMforPDA
-// @version      2.1
+// @version      2.2
 // @description  A script that allows native GM functions to be called in Torn PDA.
 // @author       Kwack [2190604]
 // @match        *
 // ==/UserScript==
 
-
-
 ((window, Object, DOMException, AbortController, Promise, localStorage) => {
-	const version = 2.1;
+	const version = 2.2;
 
-	/** In PDA, scripts are not sandboxed so there is no need for unsafeWindow. */
 	const __GM_info = {
 		script: {},
 		scriptHandler: `GMforPDA version ${version}`,
@@ -20,27 +17,20 @@
 	};
 	function __GM_getValue(key, defaultValue) {
 		if (!key) throw new TypeError("No key supplied to GM_getValue");
-		const r = localStorage.getItem(key);
-		if (!r) return defaultValue ?? null;
 		try {
-			const j = JSON.parse(r);
-			if (j) return j;
-			else return defaultValue ?? null;
+			const r = localStorage.getItem(key);
+			if (typeof r !== "string") return defaultValue;
+			if (r.startsWith("GMV2_"))
+				return JSON.parse(r.slice(5)) ?? defaultValue;
+			else return r ?? defaultValue;
 		} catch (e) {
-			if (e instanceof SyntaxError)
-				return r; // Return original string if could not parse JSON, for legacy reasons
-			else {
-				console.error(
-					"**Error with GM_getValue - please contact Kwack [2190604]**",
-					e
-				);
-				throw e;
-			}
+			console.error(e);
+			return defaultValue;
 		}
 	}
 	function __GM_setValue(key, value) {
 		if (!key) throw new TypeError("No key supplied to GM_setValue");
-		localStorage.setItem(key, JSON.stringify(value));
+		localStorage.setItem(key, "GMV2_" + JSON.stringify(value));
 	}
 	function __GM_deleteValue(key) {
 		if (!key) throw new TypeError("No key supplied to GM_deleteValue");

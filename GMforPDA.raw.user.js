@@ -1,26 +1,21 @@
-// @match *
-
 ((e, t, o, r, n, i) => {
-	const a = {
+	const s = {
 		script: {},
-		scriptHandler: "GMforPDA version 2.1",
-		version: 2.1,
+		scriptHandler: "GMforPDA version 2.2",
+		version: 2.2,
 	};
-	function s(e, t) {
+	function a(e, t) {
 		if (!e) throw new TypeError("No key supplied to GM_getValue");
 		const o = i.getItem(e);
-		if (!o) return t ?? null;
-		try {
-			const e = JSON.parse(o);
-			return e || (t ?? null);
-		} catch (r) {
-			if (r instanceof SyntaxError) return o;
-			throw r;
-		}
+		return "string" != typeof o
+			? t
+			: o.startsWith("GMV2_")
+			? JSON.parse(o.slice(5)) ?? t
+			: o ?? t;
 	}
 	function l(e, t) {
 		if (!e) throw new TypeError("No key supplied to GM_setValue");
-		i.setItem(e, JSON.stringify(t));
+		i.setItem(e, "GMV2_" + JSON.stringify(t));
 	}
 	function u(e) {
 		if (!e) throw new TypeError("No key supplied to GM_deleteValue");
@@ -56,11 +51,11 @@
 		navigator.clipboard.writeText(e);
 	}
 	const w = {
-		version: 2.1,
-		info: a,
+		version: 2.2,
+		info: s,
 		addStyle: d,
 		deleteValue: async (e) => u(e),
-		getValue: async (e, t) => s(e, t),
+		getValue: async (e, t) => a(e, t),
 		listValues: async () => c(),
 		notification: p,
 		setClipboard: f,
@@ -77,8 +72,8 @@
 	function y(e) {
 		const t = new r(),
 			i = t.signal,
-			a = new r(),
-			s = a.signal,
+			s = new r(),
+			a = s.signal,
 			{
 				url: l,
 				method: u,
@@ -93,14 +88,14 @@
 				onreadystatechange: m,
 				ontimeout: M,
 			} = e;
-		setTimeout(() => a.abort(), d ?? 3e4);
+		setTimeout(() => s.abort(), d ?? 3e4);
 		return {
 			abortController: t,
 			prom: new n(async (e, t) => {
 				try {
 					l || t("No URL supplied"),
 						i.addEventListener("abort", () => t("Request aborted")),
-						s.addEventListener("abort", () =>
+						a.addEventListener("abort", () =>
 							t("Request timed out")
 						),
 						u && "post" === u.toLowerCase()
@@ -109,8 +104,8 @@
 									.catch(t),
 							  b?.())
 							: (PDA_httpGet(l).then(e).catch(t), b?.());
-				} catch (o) {
-					t(o);
+				} catch (e) {
+					t(e);
 				}
 			})
 				.then((e) => (y?.(e), h?.(e), m?.(e), e))
@@ -158,8 +153,8 @@
 	}
 	t.entries({
 		GM: t.freeze(w),
-		GM_info: t.freeze(a),
-		GM_getValue: s,
+		GM_info: t.freeze(s),
+		GM_getValue: a,
 		GM_setValue: l,
 		GM_deleteValue: u,
 		GM_listValues: c,
