@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name         GMforPDA
 // @namespace    https://github.com/Kwack-Kwack/GMforPDA
-// @version      2.2
+// @version      2.2.1
 // @description  A script that allows native GM functions to be called in Torn PDA.
 // @author       Kwack [2190604]
 // @match        *
+// @run-at       document-start
 // ==/UserScript==
 
 ((window, Object, DOMException, AbortController, Promise, localStorage) => {
