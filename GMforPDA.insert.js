@@ -1,6 +1,30 @@
 // This should not be installed directly, it is a compatibility layer that can be used *inside* a script
 const GM_OBJECT = {};
 ((e, t, o, r, n, i) => {
+	if (typeof unsafeWindow !== "undefined") {
+		// GM API is already available, just use existing definitions
+		Object.entries({
+			GM,
+			GM_info,
+			GM_getValue,
+			GM_setValue,
+			GM_deleteValue,
+			GM_listValues,
+			GM_addStyle,
+			GM_notification,
+			GM_setClipboard,
+			GM_xmlhttpRequest,
+			unsafeWindow,
+		}).forEach(([key, value]) => {
+			t.defineProperty(e, key, {
+				value,
+				writable: !1,
+				enumerable: !0,
+				configurable: !1,
+			});
+		});
+		return;
+	}
 	const s = {
 		script: {},
 		scriptHandler: "GMforPDA version 2.2",
@@ -12,8 +36,8 @@ const GM_OBJECT = {};
 		return "string" != typeof o
 			? t
 			: o.startsWith("GMV2_")
-			? JSON.parse(o.slice(5)) ?? t
-			: o ?? t;
+				? (JSON.parse(o.slice(5)) ?? t)
+				: (o ?? t);
 	}
 	function l(e, t) {
 		if (!e) throw new TypeError("No key supplied to GM_setValue");
@@ -42,9 +66,7 @@ const GM_OBJECT = {};
 		return { remove: () => {} };
 		function t(e, t, o, r) {
 			if (!e)
-				throw new TypeError(
-					"No notification text supplied to GM_notification"
-				);
+				throw new TypeError("No notification text supplied to GM_notification");
 			confirm(`${t ?? "No title specified"}\n${e}`) && o?.(), r?.();
 		}
 	}
@@ -64,9 +86,7 @@ const GM_OBJECT = {};
 		setValue: async (e, t) => l(e, t),
 		xmlHttpRequest: async (e) => {
 			if (!e || "object" != typeof e)
-				throw new TypeError(
-					"Invalid details passed to GM.xmlHttpRequest"
-				);
+				throw new TypeError("Invalid details passed to GM.xmlHttpRequest");
 			const { abortController: t, prom: o } = y(e);
 			return (o.abort = () => t.abort()), o;
 		},
@@ -97,14 +117,12 @@ const GM_OBJECT = {};
 				try {
 					l || t("No URL supplied"),
 						i.addEventListener("abort", () => t("Request aborted")),
-						a.addEventListener("abort", () =>
-							t("Request timed out")
-						),
+						a.addEventListener("abort", () => t("Request timed out")),
 						u && "post" === u.toLowerCase()
 							? (PDA_httpPost(l, c ?? {}, p ?? "")
 									.then(e)
 									.catch(t),
-							  b?.())
+								b?.())
 							: (PDA_httpGet(l).then(e).catch(t), b?.());
 				} catch (e) {
 					t(e);
@@ -114,31 +132,17 @@ const GM_OBJECT = {};
 				.catch((e) => {
 					switch (!0) {
 						case "Request aborted" === e:
-							if (
-								((e = new o("Request aborted", "AbortError")),
-								f)
-							)
+							if (((e = new o("Request aborted", "AbortError")), f))
 								return f(e);
 							if (w) return w(e);
 							throw e;
 						case "Request timed out" === e:
-							if (
-								((e = new o(
-									"Request timed out",
-									"TimeoutError"
-								)),
-								M)
-							)
+							if (((e = new o("Request timed out", "TimeoutError")), M))
 								return M(e);
 							if (w) return w(e);
 							throw e;
 						case "No URL supplied" === e:
-							if (
-								((e = new TypeError(
-									"Failed to fetch: No URL supplied"
-								)),
-								w)
-							)
+							if (((e = new TypeError("Failed to fetch: No URL supplied")), w))
 								return w(e);
 							throw e;
 						default:
@@ -166,9 +170,7 @@ const GM_OBJECT = {};
 		GM_xmlhttpRequest: function (e) {
 			const { abortController: t } = y(e);
 			if (!e || "object" != typeof e)
-				throw new TypeError(
-					"Invalid details passed to GM_xmlHttpRequest"
-				);
+				throw new TypeError("Invalid details passed to GM_xmlHttpRequest");
 			return { abort: () => t.abort() };
 		},
 		unsafeWindow: e,
