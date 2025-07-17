@@ -1,7 +1,7 @@
 // This should not be installed directly, it is a compatibility layer that can be used *inside* a script
 const GM_OBJECT = {};
 ((e, t, o, r, n, i) => {
-	if (typeof unsafeWindow !== "undefined") {
+	if (typeof window.unsafeWindow !== "undefined") {
 		// GM API is already available, just use existing definitions
 		Object.entries({
 			GM,
