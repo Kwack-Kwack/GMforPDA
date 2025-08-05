@@ -4,17 +4,17 @@ const GM_OBJECT = {};
 	if (typeof window.unsafeWindow !== "undefined") {
 		// GM API is already available, just use existing definitions
 		Object.entries({
-			GM,
-			GM_info,
-			GM_getValue,
-			GM_setValue,
-			GM_deleteValue,
-			GM_listValues,
-			GM_addStyle,
-			GM_notification,
-			GM_setClipboard,
-			GM_xmlhttpRequest,
-			unsafeWindow,
+			GM: window.GM,
+			GM_info: window.GM_info,
+			GM_getValue: window.GM_getValue,
+			GM_setValue: window.GM_setValue,
+			GM_deleteValue: window.GM_deleteValue,
+			GM_listValues: window.GM_listValues,
+			GM_addStyle: window.GM_addStyle,
+			GM_notification: window.GM_notification,
+			GM_setClipboard: window.GM_setClipboard,
+			GM_xmlhttpRequest: window.GM_xmlhttpRequest,
+			unsafeWindow: window.unsafeWindow,
 		}).forEach(([key, value]) => {
 			t.defineProperty(e, key, {
 				value,
