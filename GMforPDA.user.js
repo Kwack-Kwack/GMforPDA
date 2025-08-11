@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         GMforPDA
 // @namespace    https://github.com/Kwack-Kwack/GMforPDA
-// @version      2.2.1
+// @version      2.2.2
 // @description  A script that allows native GM functions to be called in Torn PDA.
 // @author       Kwack [2190604]
 // @match        *
@@ -146,7 +146,7 @@
 					rej("Request timed out")
 				);
 				if (!method || method.toLowerCase() !== "post") {
-					PDA_httpGet(url).then(res).catch(rej);
+					PDA_httpGet(url, headers ?? {}).then(res).catch(rej);
 					onprogress?.();
 				} else {
 					PDA_httpPost(url, headers ?? {}, data ?? "")
