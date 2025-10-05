@@ -53,7 +53,7 @@ const GM_OBJECT = {};
 	function d(e) {
 		if (!e || "string" != typeof e) return;
 		const t = document.createElement("style");
-		(t.type = "text/css"), (t.innerHTML = e), document.head.appendChild(t);
+		(t.type = "text/css"), (t.innerHTML = e), (document.head || document.documentElement).appendChild(t);
 	}
 	function p(...e) {
 		if ("object" == typeof e[0]) {
